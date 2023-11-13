@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @db.VarChar(50)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(100)
+  role      Role     @default(USER)
+  activate  Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+
+  @@map("users")
+}
+
+model Restaurant {
+  id                    String               @id @default(uuid()) @db.Uuid
+  name                  String               @db.VarChar(255)
+  phone_number          String               @db.VarChar(15)
+  street_name           String               @db.VarChar(255)
+  opening_hours_start   DateTime
+  opening_hours_end     DateTime
+  createdAt             DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime             @updatedAt @db.Timestamp(6)
+  nearby_landmarks      String[]
+  maintenance_history   MaintenanceHistory[]
+  restaurant_menu_items RestaurantMenuItem[]
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id                    String               @id @default(uuid()) @db.Uuid
+  item_name             String               @db.VarChar(255)
+  serving_times         String[]
+  createdAt             DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime             @updatedAt @db.Timestamp(6)
+  restaurant_menu_items RestaurantMenuItem[]
+
+  @@map("menu_items")
+}
+
+model RestaurantMenuItem {
+  id            String     @id @default(uuid()) @db.Uuid
+  restaurant_id String     @db.Uuid
+  item_id       String     @db.Uuid
+  restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+  menuItem      MenuItem   @relation(fields: [item_id], references: [id])
+
+  @@map("restaurant_menu_item")
+}
+
+model MaintenanceHistory {
+  id                     String     @id @default(uuid()) @db.Uuid
+  restaurant_id          String     @db.Uuid
+  maintenance_date_start DateTime
+  maintenance_date_end   DateTime
+  impact_on_restaurant   Impact
+  quota_price            Decimal    @db.Decimal(10, 2)
+  comments               String?    @db.Text
+  createdAt              DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt              DateTime   @updatedAt @db.Timestamp(6)
+  restaurant             Restaurant @relation(fields: [restaurant_id], references: [id])
+
+  @@map("maintenance_history")
+}
+
+enum Impact {
+  Complete
+  Partial
+  Normal
+}
+
+enum Role {
+  USER
+  ADMIN
+}
